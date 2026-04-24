@@ -45,6 +45,18 @@ export const AuthProvider = ({ children }) => {
     setAuthError(null);
   };
 
+  const setAuthFromResponse = (data) => {
+    if (data.token) {
+      localStorage.setItem('auth_token', data.token);
+    }
+    if (data.user) {
+      setUser(data.user);
+      setIsAuthenticated(true);
+      setIsLoadingAuth(false);
+      setAuthChecked(true);
+    }
+  };
+
   const navigateToLogin = () => {
     window.location.href = '/signin';
   };
@@ -60,6 +72,7 @@ export const AuthProvider = ({ children }) => {
       logout,
       navigateToLogin,
       checkUserAuth,
+      setAuthFromResponse,
     }}>
       {children}
     </AuthContext.Provider>

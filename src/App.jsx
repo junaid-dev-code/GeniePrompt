@@ -21,6 +21,8 @@ function AppLayout() {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
+        overflow: 'auto',
+        position: 'relative',
       }}
       className="max-md:ml-0"
       >

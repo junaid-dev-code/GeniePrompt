@@ -7,17 +7,26 @@ import ResultCard from '@/components/prompt-cowboy/ResultCard';
 import TemplateBuilder from '@/components/prompt-cowboy/TemplateBuilder';
 import { promptsApi, memoriesApi } from '@/lib/promptsApi';
 
+const SAVED_PROMPT_KEY = 'pg_saved_prompt';
+const SAVED_RESULT_KEY = 'pg_saved_result';
+const SAVED_ORIGINAL_KEY = 'pg_saved_original';
+
 export default function Home() {
-  const [promptText, setPromptText] = useState('');
+  const [promptText, setPromptText] = useState(() => localStorage.getItem(SAVED_PROMPT_KEY) || '');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [originalInput, setOriginalInput] = useState('');
+  const [result, setResult] = useState(() => localStorage.getItem(SAVED_RESULT_KEY) || null);
+  const [originalInput, setOriginalInput] = useState(() => localStorage.getItem(SAVED_ORIGINAL_KEY) || '');
   const [activeMode, setActiveMode] = useState('prompt');
   const [memories, setMemories] = useState([]);
 
   useEffect(() => {
     memoriesApi.list().then(setMemories).catch(() => {});
   }, []);
+
+  const updatePromptText = (text) => {
+    setPromptText(text);
+    localStorage.setItem(SAVED_PROMPT_KEY, text);
+  };
 
   const handleSend = async () => {
     if (!promptText.trim()) {
@@ -26,11 +35,14 @@ export default function Home() {
     }
     setIsLoading(true);
     setOriginalInput(promptText);
+    localStorage.setItem(SAVED_ORIGINAL_KEY, promptText);
     setResult(null);
+    localStorage.removeItem(SAVED_RESULT_KEY);
 
     try {
       const improved = await promptsApi.generate(promptText, memories);
       setResult(improved);
+      localStorage.setItem(SAVED_RESULT_KEY, improved);
     } catch (err) {
       toast.error('Something went wrong. Please try again.');
     } finally {
@@ -44,16 +56,18 @@ export default function Home() {
   };
 
   const handleCardClick = (template) => {
-    setPromptText(template);
+    updatePromptText(template);
     setActiveMode('prompt');
     setResult(null);
+    localStorage.removeItem(SAVED_RESULT_KEY);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleUseTemplate = (body) => {
-    setPromptText(body);
+    updatePromptText(body);
     setActiveMode('prompt');
     setResult(null);
+    localStorage.removeItem(SAVED_RESULT_KEY);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -63,10 +77,10 @@ export default function Home() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative' }}>
       {/* Ambient glow */}
       <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, left: 0,
+        position: 'absolute', top: 0, right: 0, bottom: 0, left: 0,
         pointerEvents: 'none', zIndex: 0,
         background: 'radial-gradient(ellipse at 75% 35%, rgba(200,184,138,0.13) 0%, transparent 55%)',
       }} />
@@ -129,7 +143,7 @@ export default function Home() {
           {activeMode === 'prompt' && (
             <PromptInput
               value={promptText}
-              onChange={setPromptText}
+              onChange={updatePromptText}
               onSend={handleSend}
               isLoading={isLoading}
               memories={memories}

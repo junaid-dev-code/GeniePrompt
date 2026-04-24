@@ -37,6 +37,7 @@ export default function Memories() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMemory, setNewMemory] = useState('');
   const [newMemoryScope, setNewMemoryScope] = useState('global');
+  const [presetScope, setPresetScope] = useState('global');
   const [addingPreset, setAddingPreset] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
@@ -143,20 +144,50 @@ export default function Memories() {
           </div>
         )}
 
+        {/* Preset scope selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <span style={{ fontSize: 12, color: '#6B7A5A' }}>Save presets as:</span>
+          <div style={{
+            display: 'flex', borderRadius: 6, overflow: 'hidden',
+            border: '1px solid rgba(200,184,138,0.3)',
+          }}>
+            <button
+              type="button"
+              onClick={() => setPresetScope('global')}
+              style={{
+                padding: '4px 12px', fontSize: 11, border: 'none', cursor: 'pointer',
+                background: presetScope === 'global' ? '#2C3A1E' : '#FDFAF4',
+                color: presetScope === 'global' ? '#F5F0E8' : '#6B7A5A',
+                transition: 'all 150ms',
+              }}
+            >Global</button>
+            <button
+              type="button"
+              onClick={() => setPresetScope('workspace')}
+              style={{
+                padding: '4px 12px', fontSize: 11, border: 'none', cursor: 'pointer',
+                background: presetScope === 'workspace' ? '#2C3A1E' : '#FDFAF4',
+                color: presetScope === 'workspace' ? '#F5F0E8' : '#6B7A5A',
+                transition: 'all 150ms',
+              }}
+            >Workspace</button>
+          </div>
+        </div>
+
         {/* Preset pills */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {PRESET_NEUTRAL.map(text => (
-            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text, 'global')} variant="neutral" />
+            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text, presetScope)} variant="neutral" />
           ))}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {PRESET_ACCENT.map(text => (
-            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text, 'workspace')} variant="accent" />
+            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text, presetScope)} variant="accent" />
           ))}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
           {PRESET_DARK.map(text => (
-            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text, 'workspace')} variant="dark" />
+            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text, presetScope)} variant="dark" />
           ))}
         </div>
 

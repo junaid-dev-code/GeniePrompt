@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/AuthContext';
 
 export default function SignIn() {
   const navigate = useNavigate();
-  const { checkUserAuth } = useAuth();
+  const { setAuthFromResponse } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,18 +19,13 @@ export default function SignIn() {
     setError('');
     setLoading(true);
     try {
+      let result;
       if (isSignUp) {
-        const result = await authApi.register(email, password, fullName);
-        if (result.token) {
-          localStorage.setItem('auth_token', result.token);
-        }
+        result = await authApi.register(email, password, fullName);
       } else {
-        const result = await authApi.login(email, password);
-        if (result.token) {
-          localStorage.setItem('auth_token', result.token);
-        }
+        result = await authApi.login(email, password);
       }
-      await checkUserAuth();
+      setAuthFromResponse(result);
       navigate('/');
     } catch (err) {
       setError(err.message || 'Authentication failed');
@@ -102,6 +97,7 @@ export default function SignIn() {
                     <input
                       type="text" value={fullName} onChange={e => setFullName(e.target.value)}
                       placeholder="Your name" required={isSignUp}
+                      autoComplete="off"
                       style={{
                         width: '100%', height: 42, padding: '0 14px', fontSize: 14,
                         color: '#1A2410', background: '#FDFAF4', border: 'none',
@@ -123,6 +119,7 @@ export default function SignIn() {
                   <input
                     type="email" value={email} onChange={e => setEmail(e.target.value)}
                     placeholder="you@example.com" required
+                    autoComplete="off"
                     style={{
                       width: '100%', height: 42, padding: '0 14px', fontSize: 14,
                       color: '#1A2410', background: '#FDFAF4', border: 'none',
@@ -143,6 +140,7 @@ export default function SignIn() {
                   <input
                     type="password" value={password} onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••" required
+                    autoComplete="new-password"
                     style={{
                       width: '100%', height: 42, padding: '0 14px', fontSize: 14,
                       color: '#1A2410', background: '#FDFAF4', border: 'none',
