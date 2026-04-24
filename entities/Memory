@@ -1,0 +1,50 @@
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import Sidebar from './components/prompt-generator/Sidebar'
+import Home from './pages/Home'
+import Library from './pages/Library'
+import Memories from './pages/Memories'
+import FeedbackButton from './components/prompt-generator/FeedbackButton'
+import { Toaster } from 'sonner'
+
+function AppContent() {
+  const location = useLocation()
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--color-bg)' }}>
+      <Sidebar currentPath={location.pathname} />
+      <main style={{
+        marginLeft: 'var(--sidebar-width, 72px)',
+        transition: 'margin-left 300ms ease-in-out',
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/library" element={<Library />} />
+          <Route path="/memories" element={<Memories />} />
+        </Routes>
+      </main>
+      <FeedbackButton />
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: '#2C3A1E',
+            color: '#D4C49A',
+            border: '1px solid rgba(200, 184, 138, 0.3)',
+            borderRadius: '8px',
+            fontSize: '13px',
+          }
+        }}
+      />
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  )
+}
