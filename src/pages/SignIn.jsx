@@ -6,27 +6,35 @@ import { useAuth } from '@/lib/AuthContext';
 
 export default function SignIn() {
   const navigate = useNavigate();
-  const { setAuthFromResponse } = useAuth();
+  const { setAuthFromResponse, logout } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [fullName, setFullName] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      let result;
       if (isSignUp) {
-        result = await authApi.register(email, password, fullName);
+        await authApi.register(email, password, fullName);
+        await logout();
+        setIsSignUp(false);
+        setEmail('');
+        setPassword('');
+        setFullName('');
+        setError('');
+        setSuccessMsg('Account created! Please sign in.');
+        navigate('/signin', { replace: true });
       } else {
-        result = await authApi.login(email, password);
+        const result = await authApi.login(email, password);
+        setAuthFromResponse(result);
+        navigate('/');
       }
-      setAuthFromResponse(result);
-      navigate('/');
     } catch (err) {
       setError(err.message || 'Authentication failed');
     } finally {
@@ -73,6 +81,16 @@ export default function SignIn() {
             <p style={{ fontSize: 13, color: '#6B7A5A', marginBottom: 28 }}>
               {isSignUp ? 'Sign up to get started with PromptGenie' : 'Sign in to continue to PromptGenie'}
             </p>
+
+            {successMsg && (
+              <div style={{
+                background: 'rgba(44,58,30,0.08)', border: '1px solid rgba(44,58,30,0.2)',
+                borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#2C3A1E',
+                marginBottom: 16,
+              }}>
+                {successMsg}
+              </div>
+            )}
 
             {error && (
               <div style={{

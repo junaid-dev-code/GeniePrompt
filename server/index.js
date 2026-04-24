@@ -109,10 +109,9 @@ app.post('/api/auth/register', async (req, res) => {
     }
     const password_hash = await bcrypt.hash(password, 10);
     const result = db.prepare('INSERT INTO users (email, password_hash, full_name) VALUES (?, ?, ?)').run(email, password_hash, full_name || '');
-    const token = jwt.sign({ userId: result.lastInsertRowid, email }, JWT_SECRET, { expiresIn: '30d' });
     res.status(201).json({
-      token,
       user: { id: result.lastInsertRowid, email, full_name: full_name || '', role: 'user' },
+      message: 'Account created successfully. Please sign in.',
     });
   } catch (err) {
     console.error('Register error:', err);
