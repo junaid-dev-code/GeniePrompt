@@ -37,9 +37,9 @@ export default function Memories() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMemory, setNewMemory] = useState('');
   const [newMemoryScope, setNewMemoryScope] = useState('global');
-  const [presetScope, setPresetScope] = useState('global');
   const [addingPreset, setAddingPreset] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [scopePopupText, setScopePopupText] = useState(null);
 
   useEffect(() => {
     memoriesApi.list().then(data => {
@@ -144,52 +144,92 @@ export default function Memories() {
           </div>
         )}
 
-        {/* Preset scope selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-          <span style={{ fontSize: 12, color: '#6B7A5A' }}>Save presets as:</span>
-          <div style={{
-            display: 'flex', borderRadius: 6, overflow: 'hidden',
-            border: '1px solid rgba(200,184,138,0.3)',
-          }}>
-            <button
-              type="button"
-              onClick={() => setPresetScope('global')}
-              style={{
-                padding: '4px 12px', fontSize: 11, border: 'none', cursor: 'pointer',
-                background: presetScope === 'global' ? '#2C3A1E' : '#FDFAF4',
-                color: presetScope === 'global' ? '#F5F0E8' : '#6B7A5A',
-                transition: 'all 150ms',
-              }}
-            >Global</button>
-            <button
-              type="button"
-              onClick={() => setPresetScope('workspace')}
-              style={{
-                padding: '4px 12px', fontSize: 11, border: 'none', cursor: 'pointer',
-                background: presetScope === 'workspace' ? '#2C3A1E' : '#FDFAF4',
-                color: presetScope === 'workspace' ? '#F5F0E8' : '#6B7A5A',
-                transition: 'all 150ms',
-              }}
-            >Workspace</button>
-          </div>
-        </div>
-
         {/* Preset pills */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {PRESET_NEUTRAL.map(text => (
-            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text, presetScope)} variant="neutral" />
+            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => setScopePopupText(text)} variant="neutral" />
           ))}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {PRESET_ACCENT.map(text => (
-            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text, presetScope)} variant="accent" />
+            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => setScopePopupText(text)} variant="accent" />
           ))}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
           {PRESET_DARK.map(text => (
-            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text, presetScope)} variant="dark" />
+            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => setScopePopupText(text)} variant="dark" />
           ))}
         </div>
+
+        {/* Scope selection popup */}
+        {scopePopupText && (
+          <>
+            <div
+              onClick={() => setScopePopupText(null)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(26,36,16,0.4)', zIndex: 500 }}
+            />
+            <div style={{
+              position: 'fixed', top: '50%', left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 510, width: 320,
+            }}>
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(44,58,30,0.3), rgba(200,184,138,0.5), rgba(44,58,30,0.3))',
+                padding: 1, borderRadius: 13,
+                boxShadow: '0 8px 32px rgba(44,58,30,0.2)',
+              }}>
+                <div style={{
+                  background: '#FDFAF4', borderRadius: 12, padding: 24,
+                  textAlign: 'center',
+                }}>
+                  <div style={{ color: '#1A2410', fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
+                    Save memory
+                  </div>
+                  <div style={{
+                    fontSize: 13, color: '#6B7A5A', marginBottom: 16,
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>
+                    "{scopePopupText}"
+                  </div>
+                  <div style={{ color: '#6B7A5A', fontSize: 12, marginBottom: 12 }}>
+                    Choose scope:
+                  </div>
+                  <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                    <button
+                      onClick={() => { handleAddPreset(scopePopupText, 'global'); setScopePopupText(null); }}
+                      style={{
+                        padding: '10px 24px', fontSize: 13, borderRadius: 8,
+                        border: 'none', cursor: 'pointer',
+                        background: '#2C3A1E', color: '#F5F0E8',
+                        fontWeight: 500, transition: 'all 150ms',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#3A4D28'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#2C3A1E'; }}
+                    >Global</button>
+                    <button
+                      onClick={() => { handleAddPreset(scopePopupText, 'workspace'); setScopePopupText(null); }}
+                      style={{
+                        padding: '10px 24px', fontSize: 13, borderRadius: 8,
+                        border: '1px solid rgba(200,184,138,0.4)', cursor: 'pointer',
+                        background: '#FDFAF4', color: '#6B7A5A',
+                        fontWeight: 500, transition: 'all 150ms',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(200,184,138,0.7)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(200,184,138,0.4)'; }}
+                    >Workspace</button>
+                  </div>
+                  <button
+                    onClick={() => setScopePopupText(null)}
+                    style={{
+                      marginTop: 16, background: 'none', border: 'none',
+                      color: '#A0956A', fontSize: 12, cursor: 'pointer',
+                    }}
+                  >Cancel</button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Add custom button */}
         {!showAddForm ? (
