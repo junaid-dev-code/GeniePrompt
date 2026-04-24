@@ -176,7 +176,7 @@ export default function SignIn() {
             <div style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: '#6B7A5A' }}>
               {isSignUp ? "Already have an account?" : "Don't have an account?"}{' '}
               <span
-                onClick={() => setIsSignUp(!isSignUp)}
+                onClick={() => { setIsSignUp(!isSignUp); setEmail(''); setPassword(''); setFullName(''); setError(''); }}
                 style={{ color: '#2C3A1E', fontWeight: 600, textDecoration: 'none', cursor: 'pointer' }}
               >
                 {isSignUp ? 'Sign in' : 'Sign up free'}

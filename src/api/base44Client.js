@@ -40,10 +40,10 @@ export const authApi = {
 export const memoriesApi = {
   getAll: () => apiRequest('/memories'),
   getActive: () => apiRequest('/memories/active'),
-  create: (text, enabled = true) =>
+  create: (text, enabled = true, scope = 'global') =>
     apiRequest('/memories', {
       method: 'POST',
-      body: JSON.stringify({ text, enabled }),
+      body: JSON.stringify({ text, enabled, scope }),
     }),
   update: (id, updates) =>
     apiRequest(`/memories/${id}`, {

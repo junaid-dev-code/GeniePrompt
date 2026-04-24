@@ -170,11 +170,12 @@ app.get('/api/memories/active', authMiddleware, (req, res) => {
 });
 
 app.post('/api/memories', authMiddleware, (req, res) => {
-  const { text, enabled } = req.body;
+  const { text, enabled, scope } = req.body;
   if (!text || !text.trim()) {
     return res.status(400).json({ error: 'Memory text is required' });
   }
-  const result = db.prepare('INSERT INTO memories (user_id, text, enabled) VALUES (?, ?, ?)').run(req.userId, text.trim(), enabled !== false ? 1 : 0);
+  const validScope = (scope === 'workspace') ? 'workspace' : 'global';
+  const result = db.prepare('INSERT INTO memories (user_id, text, enabled, scope) VALUES (?, ?, ?, ?)').run(req.userId, text.trim(), enabled !== false ? 1 : 0, validScope);
   const memory = db.prepare('SELECT * FROM memories WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json(memory);
 });

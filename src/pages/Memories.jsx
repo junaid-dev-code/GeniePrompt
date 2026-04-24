@@ -36,6 +36,7 @@ export default function Memories() {
   const [sortBy, setSortBy] = useState('newest');
   const [showAddForm, setShowAddForm] = useState(false);
   const [newMemory, setNewMemory] = useState('');
+  const [newMemoryScope, setNewMemoryScope] = useState('global');
   const [addingPreset, setAddingPreset] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
@@ -55,9 +56,9 @@ export default function Memories() {
     return result;
   }, [memories, search, scopeFilter, sortBy]);
 
-  const handleAddPreset = async (text) => {
+  const handleAddPreset = async (text, scope = 'global') => {
     setAddingPreset(text);
-    const created = await memoriesApi.create(text, true);
+    const created = await memoriesApi.create(text, true, scope);
     setMemories(prev => [created, ...prev]);
     toast.success('Memory added');
     setAddingPreset(null);
@@ -65,10 +66,11 @@ export default function Memories() {
 
   const handleAddCustom = async () => {
     if (!newMemory.trim()) return;
-    const created = await memoriesApi.create(newMemory.trim(), true);
+    const created = await memoriesApi.create(newMemory.trim(), true, newMemoryScope);
     setMemories(prev => [created, ...prev]);
     toast.success('Memory added');
     setNewMemory('');
+    setNewMemoryScope('global');
     setShowAddForm(false);
   };
 
@@ -144,17 +146,17 @@ export default function Memories() {
         {/* Preset pills */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {PRESET_NEUTRAL.map(text => (
-            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text)} variant="neutral" />
+            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text, 'global')} variant="neutral" />
           ))}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {PRESET_ACCENT.map(text => (
-            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text)} variant="accent" />
+            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text, 'workspace')} variant="accent" />
           ))}
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
           {PRESET_DARK.map(text => (
-            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text)} variant="dark" />
+            <PresetPill key={text} text={text} loading={addingPreset === text} onClick={() => handleAddPreset(text, 'workspace')} variant="dark" />
           ))}
         </div>
 
@@ -191,14 +193,40 @@ export default function Memories() {
                 outline: 'none', resize: 'vertical', fontFamily: 'inherit',
               }}
             />
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
+              <div style={{
+                display: 'flex', borderRadius: 8, overflow: 'hidden',
+                border: '1px solid rgba(200,184,138,0.3)',
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setNewMemoryScope('global')}
+                  style={{
+                    padding: '6px 14px', fontSize: 12, border: 'none', cursor: 'pointer',
+                    background: newMemoryScope === 'global' ? '#2C3A1E' : '#FDFAF4',
+                    color: newMemoryScope === 'global' ? '#F5F0E8' : '#6B7A5A',
+                    transition: 'all 150ms',
+                  }}
+                >Global</button>
+                <button
+                  type="button"
+                  onClick={() => setNewMemoryScope('workspace')}
+                  style={{
+                    padding: '6px 14px', fontSize: 12, border: 'none', cursor: 'pointer',
+                    background: newMemoryScope === 'workspace' ? '#2C3A1E' : '#FDFAF4',
+                    color: newMemoryScope === 'workspace' ? '#F5F0E8' : '#6B7A5A',
+                    transition: 'all 150ms',
+                  }}
+                >Workspace</button>
+              </div>
+              <div style={{ flex: 1 }} />
               <div style={{ background: 'linear-gradient(135deg, #2C3A1E, #C8B88A)', padding: 1, borderRadius: 8 }}>
                 <button onClick={handleAddCustom} style={{
                   background: '#2C3A1E', color: '#F5F0E8', padding: '8px 20px',
                   fontSize: 13, borderRadius: 7, border: 'none', cursor: 'pointer',
                 }}>Save</button>
               </div>
-              <button onClick={() => { setShowAddForm(false); setNewMemory(''); }} style={{
+              <button onClick={() => { setShowAddForm(false); setNewMemory(''); setNewMemoryScope('global'); }} style={{
                 background: 'transparent', border: '1px solid rgba(200,184,138,0.4)',
                 padding: '8px 20px', fontSize: 13, borderRadius: 8, cursor: 'pointer', color: '#6B7A5A',
               }}>Cancel</button>
@@ -225,6 +253,15 @@ export default function Memories() {
                   <Brain size={16} style={{ color: '#C8B88A', flexShrink: 0 }} />
                   <span style={{ fontSize: 13, color: '#1A2410', lineHeight: 1.5, flex: 1 }}>
                     {mem.content}
+                  </span>
+                  <span style={{
+                    fontSize: 10, fontWeight: 600, textTransform: 'uppercase',
+                    letterSpacing: '0.05em', padding: '2px 8px', borderRadius: 4,
+                    background: mem.scope === 'workspace' ? 'rgba(200,184,138,0.15)' : 'rgba(44,58,30,0.08)',
+                    color: mem.scope === 'workspace' ? '#8A7A5A' : '#4A6030',
+                    flexShrink: 0,
+                  }}>
+                    {mem.scope || 'global'}
                   </span>
                   <MemoryToggle enabled={mem.enabled} onToggle={() => handleToggle(mem.id, !mem.enabled)} />
 

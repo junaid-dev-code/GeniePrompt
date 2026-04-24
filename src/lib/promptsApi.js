@@ -44,8 +44,8 @@ export const promptsApi = {
 };
 
 export const memoriesApi = {
-  async create(content, enabled = true) {
-    const result = await clientMemoriesApi.create(content, enabled);
+  async create(content, enabled = true, scope = 'global') {
+    const result = await clientMemoriesApi.create(content, enabled, scope);
     return mapMemory(result);
   },
 
