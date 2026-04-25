@@ -143,21 +143,16 @@ export default function Home() {
           <a
             href="/pricing"
             style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '10px 20px', borderRadius: 9999,
-              background: 'rgba(200,184,138,0.1)',
-              border: '1px solid rgba(200,184,138,0.3)',
+              display: 'inline-flex', alignItems: 'center', gap: 6,
               color: '#8A7A5A', fontSize: 13, fontWeight: 500,
               textDecoration: 'none', marginBottom: 48,
-              transition: 'all 200ms',
+              transition: 'color 200ms',
             }}
             onMouseEnter={e => {
-              e.currentTarget.style.borderColor = 'rgba(200,184,138,0.5)';
-              e.currentTarget.style.background = 'rgba(200,184,138,0.15)';
+              e.currentTarget.style.color = '#6B7A5A';
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'rgba(200,184,138,0.3)';
-              e.currentTarget.style.background = 'rgba(200,184,138,0.1)';
+              e.currentTarget.style.color = '#8A7A5A';
             }}
           >
             Get exclusive early pricing and access to new features
