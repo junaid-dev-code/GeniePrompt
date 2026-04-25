@@ -42,6 +42,14 @@ export default function MemoriesPopup({ memories, onToggle, onClose, activeWorks
     return mem.scope === 'workspace' && (mem.workspace_id || 'default-workspace') === activeWorkspaceId;
   };
 
+  const formatWorkspaceLabel = (workspaceId) => {
+    const raw = (workspaceId || 'default-workspace').trim();
+    if (raw === 'default-workspace') return 'Default workspace';
+    return raw.replace(/[-_]/g, ' ');
+  };
+
+  const activeAppliedCount = memories.filter((m) => isAppliedInCurrentWorkspace(m)).length;
+
   return (
     <>
       <div
@@ -57,7 +65,7 @@ export default function MemoriesPopup({ memories, onToggle, onClose, activeWorks
         style={{
           position: 'fixed', top: '50%', left: '50%',
           transform: 'translate(-50%, -50%)',
-          zIndex: 510, width: 340,
+          zIndex: 510, width: 420, maxWidth: 'calc(100vw - 24px)',
         }}
       >
         <div style={{
@@ -68,59 +76,72 @@ export default function MemoriesPopup({ memories, onToggle, onClose, activeWorks
           <div style={{
             background: '#FDFAF4', borderRadius: 12, padding: 16,
           }}>
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ color: '#1A2410', fontSize: 14, fontWeight: 600 }}>Memories</div>
-              <div style={{ color: '#6B7A5A', fontSize: 11 }}>
-                Active workspace: {activeWorkspaceId}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ color: '#1A2410', fontSize: 15, fontWeight: 700 }}>Memories</div>
+              <div style={{ color: '#6B7A5A', fontSize: 12, marginTop: 4 }}>
+                Workspace: {formatWorkspaceLabel(activeWorkspaceId)}
+              </div>
+              <div style={{ color: '#8A7A5A', fontSize: 11, marginTop: 2 }}>
+                {activeAppliedCount} memory{activeAppliedCount === 1 ? '' : 'ies'} apply to this prompt
               </div>
             </div>
 
             {memories.length === 0 ? (
-              <div style={{ textAlign: 'center', color: '#A0956A', fontSize: 12, padding: '12px 0' }}>
+              <div style={{ textAlign: 'center', color: '#A0956A', fontSize: 12, padding: '16px 0' }}>
                 No memories yet
               </div>
             ) : (
-              <div style={{ maxHeight: 240, overflowY: 'auto' }}>
+              <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                 {memories.map((mem) => (
                   <div key={mem.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '6px 0',
+                    display: 'flex', alignItems: 'flex-start', gap: 10,
+                    padding: '10px 0',
                     borderBottom: '1px solid rgba(200,184,138,0.15)',
                   }}>
-                    <span style={{
-                      fontSize: 12, color: '#1A2410', flex: 1,
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    }}>
-                      {mem.content}
-                    </span>
-                    <span style={{
-                      fontSize: 9, fontWeight: 700, letterSpacing: '0.04em',
-                      textTransform: 'uppercase', borderRadius: 4, padding: '2px 6px',
-                      color: mem.scope === 'workspace' ? '#8A7A5A' : '#4A6030',
-                      background: mem.scope === 'workspace' ? 'rgba(200,184,138,0.15)' : 'rgba(44,58,30,0.08)',
-                    }}>
-                      {mem.scope === 'workspace' ? 'Workspace' : 'Global'}
-                    </span>
-                    {mem.scope === 'workspace' && (
-                      <span style={{
-                        fontSize: 10, color: '#8A7A5A', maxWidth: 90,
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      }}>
-                        {mem.workspace_id || 'default-workspace'}
-                      </span>
-                    )}
-                    {isAppliedInCurrentWorkspace(mem) && (
-                      <span style={{
-                        fontSize: 9, color: '#2C3A1E', background: 'rgba(44,58,30,0.08)',
-                        borderRadius: 4, padding: '2px 6px', fontWeight: 600,
-                      }}>
-                        Active
-                      </span>
-                    )}
-                    <MemoryToggle
-                      enabled={mem.enabled}
-                      onToggle={() => onToggle(mem.id, !mem.enabled)}
-                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, color: '#1A2410', lineHeight: 1.45 }}>
+                        {mem.content}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                        <span style={{
+                          fontSize: 9, fontWeight: 700, letterSpacing: '0.04em',
+                          textTransform: 'uppercase', borderRadius: 9999, padding: '3px 8px',
+                          color: mem.scope === 'workspace' ? '#8A7A5A' : '#4A6030',
+                          background: mem.scope === 'workspace' ? 'rgba(200,184,138,0.15)' : 'rgba(44,58,30,0.08)',
+                        }}>
+                          {mem.scope === 'workspace' ? 'Workspace' : 'Global'}
+                        </span>
+                        {mem.scope === 'workspace' && (
+                          <span style={{
+                            fontSize: 10.5, color: '#8A7A5A',
+                            background: 'rgba(200,184,138,0.10)', borderRadius: 9999, padding: '2px 8px',
+                          }}>
+                            {formatWorkspaceLabel(mem.workspace_id)}
+                          </span>
+                        )}
+                        {isAppliedInCurrentWorkspace(mem) ? (
+                          <span style={{
+                            fontSize: 10, color: '#2C3A1E', background: 'rgba(44,58,30,0.10)',
+                            borderRadius: 9999, padding: '2px 8px', fontWeight: 600,
+                          }}>
+                            Applies now
+                          </span>
+                        ) : (
+                          <span style={{
+                            fontSize: 10, color: '#A0956A', background: 'rgba(200,184,138,0.15)',
+                            borderRadius: 9999, padding: '2px 8px', fontWeight: 500,
+                          }}>
+                            Not in this workspace
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ paddingTop: 2 }}>
+                      <MemoryToggle
+                        enabled={mem.enabled}
+                        onToggle={() => onToggle(mem.id, !mem.enabled)}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -129,8 +150,8 @@ export default function MemoriesPopup({ memories, onToggle, onClose, activeWorks
             <div
               onClick={() => { navigate('/memories'); onClose(); }}
               style={{
-                color: '#8A7A5A', fontSize: 11, cursor: 'pointer',
-                marginTop: 12, transition: 'color 150ms',
+                color: '#8A7A5A', fontSize: 12, cursor: 'pointer',
+                marginTop: 14, transition: 'color 150ms', fontWeight: 500,
               }}
               onMouseEnter={e => { e.currentTarget.style.color = '#2C3A1E'; }}
               onMouseLeave={e => { e.currentTarget.style.color = '#8A7A5A'; }}
