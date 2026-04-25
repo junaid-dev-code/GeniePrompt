@@ -12,6 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'prompt-genie-dev-secret';
+const DEFAULT_WORKSPACE_ID = 'default-workspace';
 
 // DeepSeek client (OpenAI-compatible API)
 let aiClient = null;
@@ -71,6 +72,15 @@ db.exec(`
     UNIQUE(user_id, name)
   );
 `);
+
+// Lightweight migration for existing DBs.
+const memoryColumns = db.prepare("PRAGMA table_info(memories)").all();
+if (!memoryColumns.some((c) => c.name === 'workspace_id')) {
+  db.exec("ALTER TABLE memories ADD COLUMN workspace_id TEXT DEFAULT NULL");
+}
+db.prepare(
+  "UPDATE memories SET workspace_id = ? WHERE scope = 'workspace' AND (workspace_id IS NULL OR workspace_id = '')"
+).run(DEFAULT_WORKSPACE_ID);
 
 // ── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors({
@@ -169,12 +179,22 @@ app.get('/api/memories/active', authMiddleware, (req, res) => {
 });
 
 app.post('/api/memories', authMiddleware, (req, res) => {
-  const { text, enabled, scope } = req.body;
+  const { text, enabled, scope, workspace_id } = req.body;
   if (!text || !text.trim()) {
     return res.status(400).json({ error: 'Memory text is required' });
   }
   const validScope = (scope === 'workspace') ? 'workspace' : 'global';
-  const result = db.prepare('INSERT INTO memories (user_id, text, enabled, scope) VALUES (?, ?, ?, ?)').run(req.userId, text.trim(), enabled !== false ? 1 : 0, validScope);
+  let validWorkspaceId = null;
+  if (validScope === 'workspace') {
+    validWorkspaceId = (workspace_id && String(workspace_id).trim()) || DEFAULT_WORKSPACE_ID;
+  }
+  const result = db.prepare('INSERT INTO memories (user_id, text, enabled, scope, workspace_id) VALUES (?, ?, ?, ?, ?)').run(
+    req.userId,
+    text.trim(),
+    enabled !== false ? 1 : 0,
+    validScope,
+    validWorkspaceId
+  );
   const memory = db.prepare('SELECT * FROM memories WHERE id = ?').get(result.lastInsertRowid);
   res.status(201).json(memory);
 });
@@ -184,11 +204,24 @@ app.put('/api/memories/:id', authMiddleware, (req, res) => {
   if (!existing) {
     return res.status(404).json({ error: 'Memory not found' });
   }
-  const { text, enabled, scope } = req.body;
+  const { text, enabled, scope, workspace_id } = req.body;
   const updates = {};
   if (text !== undefined) updates.text = text;
   if (enabled !== undefined) updates.enabled = enabled ? 1 : 0;
-  if (scope !== undefined) updates.scope = scope;
+  if (scope !== undefined) {
+    updates.scope = (scope === 'workspace') ? 'workspace' : 'global';
+  }
+  if (workspace_id !== undefined) {
+    updates.workspace_id = workspace_id ? String(workspace_id).trim() : null;
+  }
+
+  const targetScope = updates.scope || existing.scope;
+  if (targetScope === 'workspace') {
+    const mergedWorkspaceId = updates.workspace_id !== undefined ? updates.workspace_id : existing.workspace_id;
+    updates.workspace_id = mergedWorkspaceId || DEFAULT_WORKSPACE_ID;
+  } else if (targetScope === 'global') {
+    updates.workspace_id = null;
+  }
 
   if (Object.keys(updates).length === 0) {
     return res.status(400).json({ error: 'No fields to update' });
@@ -215,13 +248,24 @@ app.delete('/api/memories/:id', authMiddleware, (req, res) => {
 // ── Prompts Routes ──────────────────────────────────────────────────────────
 app.post('/api/prompts/generate', authMiddleware, async (req, res) => {
   try {
-    const { userPrompt } = req.body;
+    const { userPrompt, workspaceId } = req.body;
     if (!userPrompt || !userPrompt.trim()) {
       return res.status(400).json({ error: 'Prompt text is required' });
     }
 
-    // Fetch active memories for this user
-    const memories = db.prepare('SELECT text FROM memories WHERE user_id = ? AND enabled = 1').all(req.userId);
+    const normalizedWorkspaceId = (workspaceId && String(workspaceId).trim()) || DEFAULT_WORKSPACE_ID;
+    // Apply enabled global memories + workspace memories for current workspace only.
+    const memories = db.prepare(`
+      SELECT text
+      FROM memories
+      WHERE user_id = ?
+        AND enabled = 1
+        AND (
+          scope = 'global'
+          OR (scope = 'workspace' AND workspace_id = ?)
+        )
+      ORDER BY created_at DESC
+    `).all(req.userId, normalizedWorkspaceId);
     const memoryText = memories.map(m => m.text).join('\n');
 
     const systemPrompt = `You are a world-class prompt engineer. Your job is to take a user's rough, vague, or lazy prompt and transform it into a precise, highly effective prompt that will produce outstanding results from any AI model.

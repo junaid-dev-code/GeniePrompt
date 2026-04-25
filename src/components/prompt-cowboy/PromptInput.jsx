@@ -11,6 +11,7 @@ export default function PromptInput({
   isLoading, 
   memories = [],
   onToggleMemory,
+  activeWorkspaceId = 'default-workspace',
 }) {
   const textareaRef = useRef(null);
   const brainRef = useRef(null);
@@ -189,6 +190,7 @@ export default function PromptInput({
                     memories={memories}
                     onToggle={onToggleMemory}
                     onClose={() => setShowMemories(false)}
+                    activeWorkspaceId={activeWorkspaceId}
                   />
                 )}
               </div>

@@ -40,10 +40,10 @@ export const authApi = {
 export const memoriesApi = {
   getAll: () => apiRequest('/memories'),
   getActive: () => apiRequest('/memories/active'),
-  create: (text, enabled = true, scope = 'global') =>
+  create: (text, enabled = true, scope = 'global', workspaceId = null) =>
     apiRequest('/memories', {
       method: 'POST',
-      body: JSON.stringify({ text, enabled, scope }),
+      body: JSON.stringify({ text, enabled, scope, workspace_id: workspaceId }),
     }),
   update: (id, updates) =>
     apiRequest(`/memories/${id}`, {
@@ -54,10 +54,10 @@ export const memoriesApi = {
 };
 
 export const promptsApi = {
-  generate: (userPrompt) =>
+  generate: (userPrompt, workspaceId = null) =>
     apiRequest('/prompts/generate', {
       method: 'POST',
-      body: JSON.stringify({ userPrompt }),
+      body: JSON.stringify({ userPrompt, workspaceId }),
     }),
   getAll: (search = '') => {
     const params = search ? `?search=${encodeURIComponent(search)}` : '';

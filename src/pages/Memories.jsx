@@ -6,6 +6,8 @@ import { memoriesApi } from '@/lib/promptsApi';
 const PRESET_NEUTRAL = ['No em-dashes', "Don't sound like AI", 'Always verify sources', 'Skip the flattery'];
 const PRESET_ACCENT = ['Marketing: Use persuasive, benefit-focused language with clear calls-to-action'];
 const PRESET_DARK = ['My company', 'My role'];
+const SAVED_WORKSPACE_KEY = 'pg_active_workspace';
+const DEFAULT_WORKSPACE_ID = 'default-workspace';
 
 function MemoryToggle({ enabled, onToggle }) {
   return (
@@ -40,6 +42,7 @@ export default function Memories() {
   const [addingPreset, setAddingPreset] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [scopePopupText, setScopePopupText] = useState(null);
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(() => localStorage.getItem(SAVED_WORKSPACE_KEY) || DEFAULT_WORKSPACE_ID);
 
   useEffect(() => {
     memoriesApi.list().then(data => {
@@ -57,9 +60,23 @@ export default function Memories() {
     return result;
   }, [memories, search, scopeFilter, sortBy]);
 
+  const workspaceOptions = useMemo(() => {
+    const ids = new Set([DEFAULT_WORKSPACE_ID, selectedWorkspaceId]);
+    memories.forEach((m) => {
+      if (m.scope === 'workspace' && m.workspace_id) ids.add(m.workspace_id);
+    });
+    return Array.from(ids);
+  }, [memories, selectedWorkspaceId]);
+
+  const handleWorkspaceIdChange = (workspaceId) => {
+    setSelectedWorkspaceId(workspaceId);
+    localStorage.setItem(SAVED_WORKSPACE_KEY, workspaceId);
+  };
+
   const handleAddPreset = async (text, scope = 'global') => {
     setAddingPreset(text);
-    const created = await memoriesApi.create(text, true, scope);
+    const workspaceId = scope === 'workspace' ? selectedWorkspaceId : null;
+    const created = await memoriesApi.create(text, true, scope, workspaceId);
     setMemories(prev => [created, ...prev]);
     toast.success('Memory added');
     setAddingPreset(null);
@@ -67,7 +84,8 @@ export default function Memories() {
 
   const handleAddCustom = async () => {
     if (!newMemory.trim()) return;
-    const created = await memoriesApi.create(newMemory.trim(), true, newMemoryScope);
+    const workspaceId = newMemoryScope === 'workspace' ? selectedWorkspaceId : null;
+    const created = await memoriesApi.create(newMemory.trim(), true, newMemoryScope, workspaceId);
     setMemories(prev => [created, ...prev]);
     toast.success('Memory added');
     setNewMemory('');
@@ -98,6 +116,23 @@ export default function Memories() {
         <p style={{ fontSize: 14, color: '#6B7A5A', marginTop: 6, marginBottom: 24 }}>
           Personalize every prompt with instructions you control
         </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12, color: '#6B7A5A' }}>Active workspace</span>
+            <select
+              value={selectedWorkspaceId}
+              onChange={e => handleWorkspaceIdChange(e.target.value)}
+              style={{
+                height: 32, borderRadius: 8, border: '1px solid rgba(200,184,138,0.35)',
+                background: '#FDFAF4', color: '#1A2410', fontSize: 12, padding: '0 10px',
+              }}
+            >
+              {workspaceOptions.map(id => (
+                <option key={id} value={id}>{id}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         {/* Search & Filters */}
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
@@ -290,6 +325,17 @@ export default function Memories() {
                   }}
                 >Workspace</button>
               </div>
+              {newMemoryScope === 'workspace' && (
+                <input
+                  value={selectedWorkspaceId}
+                  onChange={e => handleWorkspaceIdChange(e.target.value)}
+                  placeholder="workspace id"
+                  style={{
+                    height: 32, borderRadius: 8, border: '1px solid rgba(200,184,138,0.35)',
+                    background: '#FDFAF4', color: '#1A2410', fontSize: 12, padding: '0 10px', minWidth: 180,
+                  }}
+                />
+              )}
               <div style={{ flex: 1 }} />
               <div style={{ background: 'linear-gradient(135deg, #2C3A1E, #C8B88A)', padding: 1, borderRadius: 8 }}>
                 <button onClick={handleAddCustom} style={{

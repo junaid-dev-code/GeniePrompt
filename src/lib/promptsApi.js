@@ -17,9 +17,9 @@ function mapPrompt(prompt) {
 }
 
 export const promptsApi = {
-  async generate(promptText, _memories = []) {
+  async generate(promptText, workspaceId = null) {
     // Server handles memory injection automatically via /prompts/generate
-    const result = await clientPromptsApi.generate(promptText);
+    const result = await clientPromptsApi.generate(promptText, workspaceId);
     return result.improvedPrompt || result;
   },
 
@@ -44,8 +44,8 @@ export const promptsApi = {
 };
 
 export const memoriesApi = {
-  async create(content, enabled = true, scope = 'global') {
-    const result = await clientMemoriesApi.create(content, enabled, scope);
+  async create(content, enabled = true, scope = 'global', workspaceId = null) {
+    const result = await clientMemoriesApi.create(content, enabled, scope, workspaceId);
     return mapMemory(result);
   },
 

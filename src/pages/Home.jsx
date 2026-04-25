@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import PromptInput from '@/components/prompt-cowboy/PromptInput';
 import ModeSwitcher from '@/components/prompt-cowboy/ModeSwitcher';
@@ -10,6 +10,8 @@ import { promptsApi, memoriesApi } from '@/lib/promptsApi';
 const SAVED_PROMPT_KEY = 'pg_saved_prompt';
 const SAVED_RESULT_KEY = 'pg_saved_result';
 const SAVED_ORIGINAL_KEY = 'pg_saved_original';
+const SAVED_WORKSPACE_KEY = 'pg_active_workspace';
+const DEFAULT_WORKSPACE_ID = 'default-workspace';
 
 export default function Home() {
   const [promptText, setPromptText] = useState(() => localStorage.getItem(SAVED_PROMPT_KEY) || '');
@@ -18,10 +20,21 @@ export default function Home() {
   const [originalInput, setOriginalInput] = useState(() => localStorage.getItem(SAVED_ORIGINAL_KEY) || '');
   const [activeMode, setActiveMode] = useState('prompt');
   const [memories, setMemories] = useState([]);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState(() => localStorage.getItem(SAVED_WORKSPACE_KEY) || DEFAULT_WORKSPACE_ID);
 
   useEffect(() => {
     memoriesApi.list().then(setMemories).catch(() => {});
   }, []);
+
+  const workspaceOptions = useMemo(() => {
+    const ids = new Set([DEFAULT_WORKSPACE_ID]);
+    memories.forEach((m) => {
+      if (m.scope === 'workspace' && m.workspace_id) {
+        ids.add(m.workspace_id);
+      }
+    });
+    return Array.from(ids);
+  }, [memories]);
 
   const updatePromptText = (text) => {
     setPromptText(text);
@@ -40,7 +53,7 @@ export default function Home() {
     localStorage.removeItem(SAVED_RESULT_KEY);
 
     try {
-      const improved = await promptsApi.generate(promptText, memories);
+      const improved = await promptsApi.generate(promptText, activeWorkspaceId);
       setResult(improved);
       localStorage.setItem(SAVED_RESULT_KEY, improved);
     } catch (err) {
@@ -74,6 +87,11 @@ export default function Home() {
   const handleToggleMemory = async (id, enabled) => {
     await memoriesApi.update(id, { enabled });
     setMemories(prev => prev.map(m => m.id === id ? { ...m, enabled } : m));
+  };
+
+  const handleWorkspaceChange = (workspaceId) => {
+    setActiveWorkspaceId(workspaceId);
+    localStorage.setItem(SAVED_WORKSPACE_KEY, workspaceId);
   };
 
   return (
@@ -141,14 +159,35 @@ export default function Home() {
 
           {/* Input - only in prompt mode */}
           {activeMode === 'prompt' && (
-            <PromptInput
-              value={promptText}
-              onChange={updatePromptText}
-              onSend={handleSend}
-              isLoading={isLoading}
-              memories={memories}
-              onToggleMemory={handleToggleMemory}
-            />
+            <>
+              <div style={{
+                width: '100%', maxWidth: 800, marginBottom: 10,
+                display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+              }}>
+                <span style={{ fontSize: 12, color: '#6B7A5A' }}>Active workspace</span>
+                <select
+                  value={activeWorkspaceId}
+                  onChange={(e) => handleWorkspaceChange(e.target.value)}
+                  style={{
+                    height: 30, borderRadius: 7, border: '1px solid rgba(200,184,138,0.35)',
+                    background: '#FDFAF4', color: '#1A2410', fontSize: 12, padding: '0 10px',
+                  }}
+                >
+                  {workspaceOptions.map((id) => (
+                    <option key={id} value={id}>{id}</option>
+                  ))}
+                </select>
+              </div>
+              <PromptInput
+                value={promptText}
+                onChange={updatePromptText}
+                onSend={handleSend}
+                isLoading={isLoading}
+                memories={memories}
+                onToggleMemory={handleToggleMemory}
+                activeWorkspaceId={activeWorkspaceId}
+              />
+            </>
           )}
 
           {/* Mode switcher */}

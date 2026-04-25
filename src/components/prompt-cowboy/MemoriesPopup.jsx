@@ -22,7 +22,7 @@ function MemoryToggle({ enabled, onToggle }) {
   );
 }
 
-export default function MemoriesPopup({ memories, onToggle, onClose }) {
+export default function MemoriesPopup({ memories, onToggle, onClose, activeWorkspaceId = 'default-workspace' }) {
   const navigate = useNavigate();
   const popupRef = useRef(null);
 
@@ -35,6 +35,12 @@ export default function MemoriesPopup({ memories, onToggle, onClose }) {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [onClose]);
+
+  const isAppliedInCurrentWorkspace = (mem) => {
+    if (!mem.enabled) return false;
+    if (mem.scope === 'global') return true;
+    return mem.scope === 'workspace' && (mem.workspace_id || 'default-workspace') === activeWorkspaceId;
+  };
 
   return (
     <>
@@ -64,7 +70,9 @@ export default function MemoriesPopup({ memories, onToggle, onClose }) {
           }}>
             <div style={{ marginBottom: 12 }}>
               <div style={{ color: '#1A2410', fontSize: 14, fontWeight: 600 }}>Memories</div>
-              <div style={{ color: '#6B7A5A', fontSize: 11 }}>Applied to every prompt</div>
+              <div style={{ color: '#6B7A5A', fontSize: 11 }}>
+                Active workspace: {activeWorkspaceId}
+              </div>
             </div>
 
             {memories.length === 0 ? (
@@ -85,6 +93,30 @@ export default function MemoriesPopup({ memories, onToggle, onClose }) {
                     }}>
                       {mem.content}
                     </span>
+                    <span style={{
+                      fontSize: 9, fontWeight: 700, letterSpacing: '0.04em',
+                      textTransform: 'uppercase', borderRadius: 4, padding: '2px 6px',
+                      color: mem.scope === 'workspace' ? '#8A7A5A' : '#4A6030',
+                      background: mem.scope === 'workspace' ? 'rgba(200,184,138,0.15)' : 'rgba(44,58,30,0.08)',
+                    }}>
+                      {mem.scope === 'workspace' ? 'Workspace' : 'Global'}
+                    </span>
+                    {mem.scope === 'workspace' && (
+                      <span style={{
+                        fontSize: 10, color: '#8A7A5A', maxWidth: 90,
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>
+                        {mem.workspace_id || 'default-workspace'}
+                      </span>
+                    )}
+                    {isAppliedInCurrentWorkspace(mem) && (
+                      <span style={{
+                        fontSize: 9, color: '#2C3A1E', background: 'rgba(44,58,30,0.08)',
+                        borderRadius: 4, padding: '2px 6px', fontWeight: 600,
+                      }}>
+                        Active
+                      </span>
+                    )}
                     <MemoryToggle
                       enabled={mem.enabled}
                       onToggle={() => onToggle(mem.id, !mem.enabled)}
