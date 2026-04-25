@@ -220,6 +220,7 @@ export default function PromptInput({
                     onToggle={onToggleMemory}
                     onToggleScope={onToggleScope}
                     onClose={() => setShowMemories(false)}
+                    anchorRef={brainRef}
                     activeWorkspaceId={activeWorkspaceId}
                     activeMemoryScope={activeMemoryScope}
                   />
