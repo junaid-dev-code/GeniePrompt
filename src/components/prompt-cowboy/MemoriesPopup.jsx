@@ -22,7 +22,7 @@ function MemoryToggle({ enabled, onToggle }) {
   );
 }
 
-export default function MemoriesPopup({ memories, onToggle, onClose, activeWorkspaceId = 'default-workspace' }) {
+export default function MemoriesPopup({ memories, onToggle, onToggleScope, onClose, activeWorkspaceId = 'default-workspace' }) {
   const navigate = useNavigate();
   const popupRef = useRef(null);
 
@@ -49,23 +49,20 @@ export default function MemoriesPopup({ memories, onToggle, onClose, activeWorks
   };
 
   const activeAppliedCount = memories.filter((m) => isAppliedInCurrentWorkspace(m)).length;
+  const globalMemories = memories.filter((m) => m.scope === 'global');
+  const workspaceMemories = memories.filter((m) => m.scope === 'workspace' && (m.workspace_id || 'default-workspace') === activeWorkspaceId);
+  const isGlobalEnabled = globalMemories.length > 0 && globalMemories.every((m) => !!m.enabled);
+  const isWorkspaceEnabled = workspaceMemories.length > 0 && workspaceMemories.every((m) => !!m.enabled);
 
   return (
     <>
       <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(26,36,16,0.4)',
-          zIndex: 500,
-        }}
-      />
-      <div
         ref={popupRef}
         style={{
-          position: 'fixed', top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 510, width: 420, maxWidth: 'calc(100vw - 24px)',
+          position: 'absolute',
+          right: 0,
+          bottom: 'calc(100% + 8px)',
+          zIndex: 510, width: 360, maxWidth: 'calc(100vw - 24px)',
         }}
       >
         <div style={{
@@ -86,12 +83,37 @@ export default function MemoriesPopup({ memories, onToggle, onClose, activeWorks
               </div>
             </div>
 
+            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+              <button
+                onClick={() => onToggleScope?.('global', !isGlobalEnabled)}
+                style={{
+                  border: '1px solid rgba(200,184,138,0.35)', borderRadius: 9999,
+                  background: isGlobalEnabled ? '#2C3A1E' : '#FDFAF4',
+                  color: isGlobalEnabled ? '#F5F0E8' : '#6B7A5A',
+                  padding: '5px 10px', fontSize: 11, cursor: 'pointer',
+                }}
+              >
+                Global {isGlobalEnabled ? 'On' : 'Off'}
+              </button>
+              <button
+                onClick={() => onToggleScope?.('workspace', !isWorkspaceEnabled)}
+                style={{
+                  border: '1px solid rgba(200,184,138,0.35)', borderRadius: 9999,
+                  background: isWorkspaceEnabled ? '#2C3A1E' : '#FDFAF4',
+                  color: isWorkspaceEnabled ? '#F5F0E8' : '#6B7A5A',
+                  padding: '5px 10px', fontSize: 11, cursor: 'pointer',
+                }}
+              >
+                Workspace {isWorkspaceEnabled ? 'On' : 'Off'}
+              </button>
+            </div>
+
             {memories.length === 0 ? (
               <div style={{ textAlign: 'center', color: '#A0956A', fontSize: 12, padding: '16px 0' }}>
                 No memories yet
               </div>
             ) : (
-              <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+              <div style={{ maxHeight: 220, overflowY: 'auto' }}>
                 {memories.map((mem) => (
                   <div key={mem.id} style={{
                     display: 'flex', alignItems: 'flex-start', gap: 10,

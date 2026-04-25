@@ -89,6 +89,24 @@ export default function Home() {
     setMemories(prev => prev.map(m => m.id === id ? { ...m, enabled } : m));
   };
 
+  const handleToggleScope = async (scope, enabled) => {
+    const targetMemories = memories.filter((m) => {
+      if (m.scope !== scope) return false;
+      if (scope === 'workspace') {
+        return (m.workspace_id || DEFAULT_WORKSPACE_ID) === activeWorkspaceId;
+      }
+      return true;
+    });
+
+    if (targetMemories.length === 0) return;
+
+    await Promise.all(targetMemories.map((m) => memoriesApi.update(m.id, { enabled })));
+    setMemories((prev) => prev.map((m) => {
+      const isTarget = targetMemories.some((t) => t.id === m.id);
+      return isTarget ? { ...m, enabled } : m;
+    }));
+  };
+
   const handleWorkspaceChange = (workspaceId) => {
     setActiveWorkspaceId(workspaceId);
     localStorage.setItem(SAVED_WORKSPACE_KEY, workspaceId);
@@ -185,6 +203,7 @@ export default function Home() {
                 isLoading={isLoading}
                 memories={memories}
                 onToggleMemory={handleToggleMemory}
+                onToggleScope={handleToggleScope}
                 activeWorkspaceId={activeWorkspaceId}
               />
             </>

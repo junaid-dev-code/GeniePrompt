@@ -11,6 +11,7 @@ export default function PromptInput({
   isLoading, 
   memories = [],
   onToggleMemory,
+  onToggleScope,
   activeWorkspaceId = 'default-workspace',
 }) {
   const textareaRef = useRef(null);
@@ -189,6 +190,7 @@ export default function PromptInput({
                   <MemoriesPopup
                     memories={memories}
                     onToggle={onToggleMemory}
+                    onToggleScope={onToggleScope}
                     onClose={() => setShowMemories(false)}
                     activeWorkspaceId={activeWorkspaceId}
                   />
