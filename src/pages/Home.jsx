@@ -140,24 +140,16 @@ export default function Home() {
         className="max-md:pt-[6vh] max-md:px-4"
         >
           {/* Early pricing banner */}
-          <a
-            href="/pricing"
+          <span
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               color: '#8A7A5A', fontSize: 13, fontWeight: 500,
-              textDecoration: 'none', marginBottom: 48,
-              transition: 'color 200ms',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.color = '#6B7A5A';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.color = '#8A7A5A';
+              marginBottom: 48,
             }}
           >
             Get exclusive early pricing and access to new features
             <span style={{ color: '#C8B88A' }}>→</span>
-          </a>
+          </span>
 
           {/* Hero */}
           <h1 style={{
