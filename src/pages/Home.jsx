@@ -12,6 +12,7 @@ const SAVED_RESULT_KEY = 'pg_saved_result';
 const SAVED_ORIGINAL_KEY = 'pg_saved_original';
 const SAVED_WORKSPACE_KEY = 'pg_active_workspace';
 const DEFAULT_WORKSPACE_ID = 'default-workspace';
+const SAVED_MEMORY_SCOPE_KEY = 'pg_memory_scope';
 
 export default function Home() {
   const [promptText, setPromptText] = useState(() => localStorage.getItem(SAVED_PROMPT_KEY) || '');
@@ -21,6 +22,7 @@ export default function Home() {
   const [activeMode, setActiveMode] = useState('prompt');
   const [memories, setMemories] = useState([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState(() => localStorage.getItem(SAVED_WORKSPACE_KEY) || DEFAULT_WORKSPACE_ID);
+  const [activeMemoryScope, setActiveMemoryScope] = useState(() => localStorage.getItem(SAVED_MEMORY_SCOPE_KEY) || 'global');
 
   useEffect(() => {
     memoriesApi.list().then(setMemories).catch(() => {});
@@ -53,7 +55,7 @@ export default function Home() {
     localStorage.removeItem(SAVED_RESULT_KEY);
 
     try {
-      const improved = await promptsApi.generate(promptText, activeWorkspaceId);
+      const improved = await promptsApi.generate(promptText, activeWorkspaceId, activeMemoryScope);
       setResult(improved);
       localStorage.setItem(SAVED_RESULT_KEY, improved);
     } catch (err) {
@@ -110,6 +112,11 @@ export default function Home() {
   const handleWorkspaceChange = (workspaceId) => {
     setActiveWorkspaceId(workspaceId);
     localStorage.setItem(SAVED_WORKSPACE_KEY, workspaceId);
+  };
+
+  const handleMemoryScopeChange = (scope) => {
+    setActiveMemoryScope(scope);
+    localStorage.setItem(SAVED_MEMORY_SCOPE_KEY, scope);
   };
 
   return (
@@ -205,6 +212,8 @@ export default function Home() {
                 onToggleMemory={handleToggleMemory}
                 onToggleScope={handleToggleScope}
                 activeWorkspaceId={activeWorkspaceId}
+                activeMemoryScope={activeMemoryScope}
+                onMemoryScopeChange={handleMemoryScopeChange}
               />
             </>
           )}

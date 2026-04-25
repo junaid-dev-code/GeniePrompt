@@ -54,10 +54,10 @@ export const memoriesApi = {
 };
 
 export const promptsApi = {
-  generate: (userPrompt, workspaceId = null) =>
+  generate: (userPrompt, workspaceId = null, memoryScope = 'global') =>
     apiRequest('/prompts/generate', {
       method: 'POST',
-      body: JSON.stringify({ userPrompt, workspaceId }),
+      body: JSON.stringify({ userPrompt, workspaceId, memoryScope }),
     }),
   getAll: (search = '') => {
     const params = search ? `?search=${encodeURIComponent(search)}` : '';

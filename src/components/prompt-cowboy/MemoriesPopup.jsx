@@ -22,7 +22,14 @@ function MemoryToggle({ enabled, onToggle }) {
   );
 }
 
-export default function MemoriesPopup({ memories, onToggle, onToggleScope, onClose, activeWorkspaceId = 'default-workspace' }) {
+export default function MemoriesPopup({
+  memories,
+  onToggle,
+  onToggleScope,
+  onClose,
+  activeWorkspaceId = 'default-workspace',
+  activeMemoryScope = 'global',
+}) {
   const navigate = useNavigate();
   const popupRef = useRef(null);
 
@@ -36,23 +43,18 @@ export default function MemoriesPopup({ memories, onToggle, onToggleScope, onClo
     return () => document.removeEventListener('mousedown', handler);
   }, [onClose]);
 
-  const isAppliedInCurrentWorkspace = (mem) => {
-    if (!mem.enabled) return false;
-    if (mem.scope === 'global') return true;
-    return mem.scope === 'workspace' && (mem.workspace_id || 'default-workspace') === activeWorkspaceId;
-  };
-
   const formatWorkspaceLabel = (workspaceId) => {
     const raw = (workspaceId || 'default-workspace').trim();
     if (raw === 'default-workspace') return 'Default workspace';
     return raw.replace(/[-_]/g, ' ');
   };
 
-  const activeAppliedCount = memories.filter((m) => isAppliedInCurrentWorkspace(m)).length;
   const globalMemories = memories.filter((m) => m.scope === 'global');
   const workspaceMemories = memories.filter((m) => m.scope === 'workspace' && (m.workspace_id || 'default-workspace') === activeWorkspaceId);
   const isGlobalEnabled = globalMemories.length > 0 && globalMemories.every((m) => !!m.enabled);
   const isWorkspaceEnabled = workspaceMemories.length > 0 && workspaceMemories.every((m) => !!m.enabled);
+  const visibleMemories = activeMemoryScope === 'workspace' ? workspaceMemories : globalMemories;
+  const visibleEnabledCount = visibleMemories.filter((m) => !!m.enabled).length;
 
   return (
     <>
@@ -79,7 +81,7 @@ export default function MemoriesPopup({ memories, onToggle, onToggleScope, onClo
                 Workspace: {formatWorkspaceLabel(activeWorkspaceId)}
               </div>
               <div style={{ color: '#8A7A5A', fontSize: 11, marginTop: 2 }}>
-                {activeAppliedCount} memory{activeAppliedCount === 1 ? '' : 'ies'} apply to this prompt
+                {visibleEnabledCount} {activeMemoryScope} memory{visibleEnabledCount === 1 ? '' : 'ies'} enabled
               </div>
             </div>
 
@@ -108,13 +110,13 @@ export default function MemoriesPopup({ memories, onToggle, onToggleScope, onClo
               </button>
             </div>
 
-            {memories.length === 0 ? (
+            {visibleMemories.length === 0 ? (
               <div style={{ textAlign: 'center', color: '#A0956A', fontSize: 12, padding: '16px 0' }}>
-                No memories yet
+                No {activeMemoryScope} memories yet
               </div>
             ) : (
-              <div style={{ maxHeight: 220, overflowY: 'auto' }}>
-                {memories.map((mem) => (
+              <div style={{ maxHeight: 150, overflowY: 'auto' }}>
+                {visibleMemories.map((mem) => (
                   <div key={mem.id} style={{
                     display: 'flex', alignItems: 'flex-start', gap: 10,
                     padding: '10px 0',
@@ -141,21 +143,12 @@ export default function MemoriesPopup({ memories, onToggle, onToggleScope, onClo
                             {formatWorkspaceLabel(mem.workspace_id)}
                           </span>
                         )}
-                        {isAppliedInCurrentWorkspace(mem) ? (
-                          <span style={{
-                            fontSize: 10, color: '#2C3A1E', background: 'rgba(44,58,30,0.10)',
-                            borderRadius: 9999, padding: '2px 8px', fontWeight: 600,
-                          }}>
-                            Applies now
-                          </span>
-                        ) : (
-                          <span style={{
-                            fontSize: 10, color: '#A0956A', background: 'rgba(200,184,138,0.15)',
-                            borderRadius: 9999, padding: '2px 8px', fontWeight: 500,
-                          }}>
-                            Not in this workspace
-                          </span>
-                        )}
+                        <span style={{
+                          fontSize: 10, color: '#2C3A1E', background: 'rgba(44,58,30,0.10)',
+                          borderRadius: 9999, padding: '2px 8px', fontWeight: 600,
+                        }}>
+                          Applies now
+                        </span>
                       </div>
                     </div>
                     <div style={{ paddingTop: 2 }}>

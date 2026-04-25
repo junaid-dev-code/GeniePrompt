@@ -248,24 +248,34 @@ app.delete('/api/memories/:id', authMiddleware, (req, res) => {
 // ── Prompts Routes ──────────────────────────────────────────────────────────
 app.post('/api/prompts/generate', authMiddleware, async (req, res) => {
   try {
-    const { userPrompt, workspaceId } = req.body;
+    const { userPrompt, workspaceId, memoryScope } = req.body;
     if (!userPrompt || !userPrompt.trim()) {
       return res.status(400).json({ error: 'Prompt text is required' });
     }
 
     const normalizedWorkspaceId = (workspaceId && String(workspaceId).trim()) || DEFAULT_WORKSPACE_ID;
-    // Apply enabled global memories + workspace memories for current workspace only.
-    const memories = db.prepare(`
-      SELECT text
-      FROM memories
-      WHERE user_id = ?
-        AND enabled = 1
-        AND (
-          scope = 'global'
-          OR (scope = 'workspace' AND workspace_id = ?)
-        )
-      ORDER BY created_at DESC
-    `).all(req.userId, normalizedWorkspaceId);
+    const normalizedScope = memoryScope === 'workspace' ? 'workspace' : 'global';
+    let memories;
+    if (normalizedScope === 'workspace') {
+      memories = db.prepare(`
+        SELECT text
+        FROM memories
+        WHERE user_id = ?
+          AND enabled = 1
+          AND scope = 'workspace'
+          AND workspace_id = ?
+        ORDER BY created_at DESC
+      `).all(req.userId, normalizedWorkspaceId);
+    } else {
+      memories = db.prepare(`
+        SELECT text
+        FROM memories
+        WHERE user_id = ?
+          AND enabled = 1
+          AND scope = 'global'
+        ORDER BY created_at DESC
+      `).all(req.userId);
+    }
     const memoryText = memories.map(m => m.text).join('\n');
 
     const systemPrompt = `You are a world-class prompt engineer. Your job is to take a user's rough, vague, or lazy prompt and transform it into a precise, highly effective prompt that will produce outstanding results from any AI model.

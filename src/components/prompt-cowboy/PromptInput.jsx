@@ -13,6 +13,8 @@ export default function PromptInput({
   onToggleMemory,
   onToggleScope,
   activeWorkspaceId = 'default-workspace',
+  activeMemoryScope = 'global',
+  onMemoryScopeChange,
 }) {
   const textareaRef = useRef(null);
   const brainRef = useRef(null);
@@ -90,50 +92,76 @@ export default function PromptInput({
             borderTop: '1px solid rgba(200,184,138,0.15)',
           }}>
             {/* Left - Prompt type */}
-            <div ref={typeRef} style={{ position: 'relative' }}>
-              <button
-                onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  color: '#6B7A5A', fontSize: 12, cursor: 'pointer',
-                  background: 'none', border: 'none', padding: '4px 8px',
-                  borderRadius: 6, transition: 'all 150ms',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(200,184,138,0.1)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
-              >
-                <Shuffle size={12} style={{ color: '#DADAC6' }} />
-                <span>Prompt type: {promptType}</span>
-                <ChevronDown size={12} style={{ color: '#DADAC6' }} />
-              </button>
-              {showTypeDropdown && (
-                <div style={{
-                  position: 'absolute', bottom: 'calc(100% + 4px)', left: 0,
-                  background: '#FDFAF4', borderRadius: 8,
-                  border: '1px solid rgba(200,184,138,0.35)',
-                  boxShadow: '0 4px 16px rgba(44,58,30,0.12)',
-                  padding: 4, zIndex: 100, minWidth: 140,
-                }}>
-                  {PROMPT_TYPES.map(type => (
-                    <button
-                      key={type}
-                      onClick={() => { setPromptType(type); setShowTypeDropdown(false); }}
-                      style={{
-                        display: 'block', width: '100%', textAlign: 'left',
-                        padding: '6px 12px', fontSize: 12, color: promptType === type ? '#1A2410' : '#6B7A5A',
-                        background: promptType === type ? 'rgba(200,184,138,0.12)' : 'transparent',
-                        border: 'none', borderRadius: 6, cursor: 'pointer',
-                        fontWeight: promptType === type ? 600 : 400,
-                        transition: 'all 150ms',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(200,184,138,0.12)'; }}
-                      onMouseLeave={e => { if (promptType !== type) e.currentTarget.style.background = 'transparent'; }}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div ref={typeRef} style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    color: '#6B7A5A', fontSize: 12, cursor: 'pointer',
+                    background: 'none', border: 'none', padding: '4px 8px',
+                    borderRadius: 6, transition: 'all 150ms',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(200,184,138,0.1)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
+                >
+                  <Shuffle size={12} style={{ color: '#DADAC6' }} />
+                  <span>Prompt type: {promptType}</span>
+                  <ChevronDown size={12} style={{ color: '#DADAC6' }} />
+                </button>
+                {showTypeDropdown && (
+                  <div style={{
+                    position: 'absolute', bottom: 'calc(100% + 4px)', left: 0,
+                    background: '#FDFAF4', borderRadius: 8,
+                    border: '1px solid rgba(200,184,138,0.35)',
+                    boxShadow: '0 4px 16px rgba(44,58,30,0.12)',
+                    padding: 4, zIndex: 100, minWidth: 140,
+                  }}>
+                    {PROMPT_TYPES.map(type => (
+                      <button
+                        key={type}
+                        onClick={() => { setPromptType(type); setShowTypeDropdown(false); }}
+                        style={{
+                          display: 'block', width: '100%', textAlign: 'left',
+                          padding: '6px 12px', fontSize: 12, color: promptType === type ? '#1A2410' : '#6B7A5A',
+                          background: promptType === type ? 'rgba(200,184,138,0.12)' : 'transparent',
+                          border: 'none', borderRadius: 6, cursor: 'pointer',
+                          fontWeight: promptType === type ? 600 : 400,
+                          transition: 'all 150ms',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(200,184,138,0.12)'; }}
+                        onMouseLeave={e => { if (promptType !== type) e.currentTarget.style.background = 'transparent'; }}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'flex', borderRadius: 9999, overflow: 'hidden', border: '1px solid rgba(200,184,138,0.35)' }}>
+                <button
+                  type="button"
+                  onClick={() => onMemoryScopeChange?.('global')}
+                  style={{
+                    border: 'none', cursor: 'pointer', fontSize: 11, padding: '5px 10px',
+                    background: activeMemoryScope === 'global' ? '#2C3A1E' : '#FDFAF4',
+                    color: activeMemoryScope === 'global' ? '#F5F0E8' : '#6B7A5A',
+                  }}
+                >
+                  Global
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onMemoryScopeChange?.('workspace')}
+                  style={{
+                    border: 'none', cursor: 'pointer', fontSize: 11, padding: '5px 10px',
+                    background: activeMemoryScope === 'workspace' ? '#2C3A1E' : '#FDFAF4',
+                    color: activeMemoryScope === 'workspace' ? '#F5F0E8' : '#6B7A5A',
+                  }}
+                >
+                  Workspace
+                </button>
+              </div>
             </div>
 
             {/* Right - buttons */}
@@ -193,6 +221,7 @@ export default function PromptInput({
                     onToggleScope={onToggleScope}
                     onClose={() => setShowMemories(false)}
                     activeWorkspaceId={activeWorkspaceId}
+                    activeMemoryScope={activeMemoryScope}
                   />
                 )}
               </div>
