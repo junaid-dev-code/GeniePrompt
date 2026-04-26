@@ -72,7 +72,7 @@ export default function PromptInput({
             onChange={handleInput}
             onKeyDown={handleKeyDown}
             disabled={isLoading}
-            placeholder="What would you like to improve?"
+            placeholder="Create Your Prompt"
             style={{
               width: '100%', background: 'transparent',
               border: 'none', outline: 'none',

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import PromptInput from '@/components/prompt-cowboy/PromptInput';
 import ModeSwitcher from '@/components/prompt-cowboy/ModeSwitcher';
-import DiscoverSection from '@/components/prompt-cowboy/DiscoverSection';
 import ResultCard from '@/components/prompt-cowboy/ResultCard';
 import TemplateBuilder from '@/components/prompt-cowboy/TemplateBuilder';
 import { promptsApi, memoriesApi } from '@/lib/promptsApi';
@@ -15,10 +14,10 @@ const DEFAULT_WORKSPACE_ID = 'default-workspace';
 const SAVED_MEMORY_SCOPE_KEY = 'pg_memory_scope';
 
 export default function Home() {
-  const [promptText, setPromptText] = useState(() => localStorage.getItem(SAVED_PROMPT_KEY) || '');
+  const [promptText, setPromptText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState(() => localStorage.getItem(SAVED_RESULT_KEY) || null);
-  const [originalInput, setOriginalInput] = useState(() => localStorage.getItem(SAVED_ORIGINAL_KEY) || '');
+  const [result, setResult] = useState(null);
+  const [originalInput, setOriginalInput] = useState('');
   const [activeMode, setActiveMode] = useState('prompt');
   const [memories, setMemories] = useState([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState(() => localStorage.getItem(SAVED_WORKSPACE_KEY) || DEFAULT_WORKSPACE_ID);
@@ -26,6 +25,13 @@ export default function Home() {
 
   useEffect(() => {
     memoriesApi.list().then(setMemories).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    // Ensure old demo/session state never shows on fresh open.
+    localStorage.removeItem(SAVED_PROMPT_KEY);
+    localStorage.removeItem(SAVED_RESULT_KEY);
+    localStorage.removeItem(SAVED_ORIGINAL_KEY);
   }, []);
 
   const workspaceOptions = useMemo(() => {
@@ -40,7 +46,6 @@ export default function Home() {
 
   const updatePromptText = (text) => {
     setPromptText(text);
-    localStorage.setItem(SAVED_PROMPT_KEY, text);
   };
 
   const handleSend = async () => {
@@ -50,14 +55,11 @@ export default function Home() {
     }
     setIsLoading(true);
     setOriginalInput(promptText);
-    localStorage.setItem(SAVED_ORIGINAL_KEY, promptText);
     setResult(null);
-    localStorage.removeItem(SAVED_RESULT_KEY);
 
     try {
       const improved = await promptsApi.generate(promptText, activeWorkspaceId, activeMemoryScope);
       setResult(improved);
-      localStorage.setItem(SAVED_RESULT_KEY, improved);
     } catch (err) {
       toast.error('Something went wrong. Please try again.');
     } finally {
@@ -70,19 +72,10 @@ export default function Home() {
     // refresh sidebar recent prompts on next navigation
   };
 
-  const handleCardClick = (template) => {
-    updatePromptText(template);
-    setActiveMode('prompt');
-    setResult(null);
-    localStorage.removeItem(SAVED_RESULT_KEY);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const handleUseTemplate = (body) => {
     updatePromptText(body);
     setActiveMode('prompt');
     setResult(null);
-    localStorage.removeItem(SAVED_RESULT_KEY);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -231,11 +224,6 @@ export default function Home() {
               originalInput={originalInput}
               onSave={handleSaveToLibrary}
             />
-          )}
-
-          {/* Discover section - only when no result and in prompt mode */}
-          {!result && !isLoading && activeMode === 'prompt' && (
-            <DiscoverSection onCardClick={handleCardClick} />
           )}
 
           {/* Spacer */}
