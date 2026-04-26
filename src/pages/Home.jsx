@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import PromptInput from '@/components/prompt-cowboy/PromptInput';
 import ModeSwitcher from '@/components/prompt-cowboy/ModeSwitcher';
+import DiscoverSection from '@/components/prompt-cowboy/DiscoverSection';
 import ResultCard from '@/components/prompt-cowboy/ResultCard';
 import TemplateBuilder from '@/components/prompt-cowboy/TemplateBuilder';
 import { promptsApi, memoriesApi } from '@/lib/promptsApi';
@@ -70,6 +71,13 @@ export default function Home() {
   const handleSaveToLibrary = async () => {
     await promptsApi.save(originalInput.substring(0, 80), originalInput, result);
     // refresh sidebar recent prompts on next navigation
+  };
+
+  const handleCardClick = (template) => {
+    updatePromptText(template);
+    setActiveMode('prompt');
+    setResult(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleUseTemplate = (body) => {
@@ -224,6 +232,11 @@ export default function Home() {
               originalInput={originalInput}
               onSave={handleSaveToLibrary}
             />
+          )}
+
+          {/* Discover section - only when no result and in prompt mode */}
+          {!result && !isLoading && activeMode === 'prompt' && (
+            <DiscoverSection onCardClick={handleCardClick} />
           )}
 
           {/* Spacer */}
